@@ -133,7 +133,8 @@ async def read_item(camera_id):
            sizey>min_sizey:
 
             payload = {}
-            response = requests.request("GET", triggerurl, data = payload)
+            #response = requests.request("GET", triggerurl, data = payload) 
+            response = requests.request("POST", triggerurl, data = payload) #HA needs a POST to trigger webhook
             end = time.time()
             runtime = round(end - start, 1)
             logging.info(f"{confidence}% sure we found a {label} - triggering {cameraname} - took {runtime} seconds")
