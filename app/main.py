@@ -94,11 +94,11 @@ async def read_item(camera_id):
         homekit_acc_id = cameradata[f"{camera_id}"]["homekitAccId"]
  
     response = requests.request("GET", url, cookies=load_cookies('cookie'))
-    logging.debug('Requested snapshot: ' + url)
+    logging.info('Requested snapshot: ' + url)
     if response.status_code == 200:
         with open(f"tmp/{camera_id}.jpg", 'wb') as f:
             f.write(response.content)
-            logging.debug('Snapshot downloaded')
+            logging.info('Snapshot downloaded')
     
     snapshot_file = f"tmp/{camera_id}.jpg"
     image_data = open(snapshot_file,"rb").read()
@@ -107,7 +107,7 @@ async def read_item(camera_id):
     response = requests.post(f"{deepstackUrl}/v1/vision/detection",files={"image":image_data},timeout=10).json()
 
     e = time.perf_counter() 
-    logging.debug(f'Got result: {json.dumps(response, indent=2)}. Time: {e-s}s');
+    logging.info(f'Got result: {json.dumps(response, indent=2)}. Time: {e-s}s');
     if not response["success"]:
         return ("Error calling Deepstack: " + response["error"]);
     
@@ -124,9 +124,10 @@ async def read_item(camera_id):
     for object in response["predictions"]:
         confidence = round(100 * object["confidence"])
         label = object["label"]
+        
         sizex=int(object["x_max"])-int(object["x_min"])
         sizey=int(object["y_max"])-int(object["y_min"])
-        logging.debug(f"  {label} ({confidence}%)   {sizex}x{sizey}")
+        logging.info(f"  {label} ({confidence}%)   {sizex}x{sizey}")
 
         if not found and label in detection_labels and \
            sizex>min_sizex and \
@@ -142,7 +143,7 @@ async def read_item(camera_id):
             found = True
             last_trigger[camera_id] = time.time()
             save_last_trigger(last_trigger)
-            logging.debug(f"Saving last camera time for {camera_id} as {last_trigger[camera_id]}")
+            logging.info(f"Saving last camera time for {camera_id} as {last_trigger[camera_id]}")
 
             if homebridgeWebhookUrl is not None and homekit_acc_id is not None:
                 hb = requests.get(f"{homebridgeWebhookUrl}/?accessoryId={homekit_acc_id}&state=true");
@@ -162,7 +163,7 @@ async def read_item(camera_id):
 
 def save_image(predictions, camera_name, snapshot_file):
     start = time.time()
-    logging.debug(f"Saving new image file....");
+    logging.info(f"Saving new image file....");
     im = Image.open(snapshot_file)
     draw = ImageDraw.Draw(im)
     for object in predictions:
@@ -175,4 +176,4 @@ def save_image(predictions, camera_name, snapshot_file):
     im.close()
     end = time.time()
     runtime = round(end - start, 1)    
-    logging.debug(f"Saved captured and annotated image: {fn} in {runtime} seconds.");
+    logging.info(f"Saved captured and annotated image: {fn} in {runtime} seconds.");
