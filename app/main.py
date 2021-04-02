@@ -37,6 +37,9 @@ else:
     trigger_interval = 60 
 if "captureDir" in settings:
     capture_dir = settings["captureDir"]
+    
+if "altcaptureDir" in settings:
+    altcapture_dir = settings["altcaptureDir"]
 
 def save_cookies(requests_cookiejar, filename):
     with open(filename, 'wb') as f:
@@ -166,13 +169,15 @@ def save_image(predictions, camera_name, snapshot_file):
     logging.info(f"Saving new image file....");
     im = Image.open(snapshot_file)
     draw = ImageDraw.Draw(im)
-    for object in predictions:
+    for object in predictions: #annotate image identifying object and confidence level
         confidence = round(100 * object["confidence"])
         label = f"{object['label']} ({confidence}%)"
         draw.rectangle((object["x_min"], object["y_min"], object["x_max"], object["y_max"]), outline=(255, 230, 66), width=2);
         draw.text((object["x_min"]+10, object["y_min"]+10), f"{label}", fill=(255,230,66))
-    fn = f"{capture_dir}/{camera_name}-{start}.jpg";
+    fn = f"{capture_dir}/{camera_name}-{start}.jpg"; #file object with time offset
+    fn1 = f"{altcapture_dir}/{camera_name}.jpg"; #file object without time offset
     im.save(f"{fn}", quality=95);
+    im.save(f"{fn1}", quality=95);  #save to alternate capture directory
     im.close()
     end = time.time()
     runtime = round(end - start, 1)    
